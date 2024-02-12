@@ -1,13 +1,17 @@
-package com.crible.logcollector;
+package com.cribl.logcollector;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.Objects;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -22,6 +26,9 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
+    @Autowired
+    private Environment envProps;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -33,15 +40,11 @@ public class WebSecurityConfig {
         return http.build();
     }
 
-    /**
-     * Hard coding a username and password here but for real dev / production this would be read from a secure local
-     * property file that is not checked into source control.
-     */
     @Bean
     public InMemoryUserDetailsManager userDetailsService() {
         UserDetails user = User.withDefaultPasswordEncoder()
-                .username("cribl")
-                .password("password")
+                .username(Objects.requireNonNull(envProps.getProperty("com.cribl.logcollector.ws.username")))
+                .password(Objects.requireNonNull(envProps.getProperty("com.cribl.logcollector.ws.password")))
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(user);

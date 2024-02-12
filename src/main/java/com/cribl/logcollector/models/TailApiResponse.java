@@ -1,4 +1,4 @@
-package com.crible.logcollector.models;
+package com.cribl.logcollector.models;
 
 import java.util.List;
 

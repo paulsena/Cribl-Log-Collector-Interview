@@ -1,4 +1,4 @@
-package com.crible.logcollector;
+package com.cribl.logcollector;
 
 import org.springframework.boot.SpringApplication;
 

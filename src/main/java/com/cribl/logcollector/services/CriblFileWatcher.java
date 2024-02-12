@@ -1,7 +1,9 @@
-package com.crible.logcollector.services;
+package com.cribl.logcollector.services;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,21 +18,25 @@ import java.util.stream.Stream;
 /**
  * Assumes UTF 8 file encoding for simple single byte per character encoding
  */
-public class CriblFileWatcherThread implements Callable<List<String>> {
+public class CriblFileWatcher implements Callable<List<String>> {
 
-    private static Logger logger = LogManager.getLogger(CriblFileWatcherThread.class);
+    private static Logger logger = LogManager.getLogger(CriblFileWatcher.class);
 
     private File logFile;
-    private int maxLines;
+    private final int maxLines;
     protected long lastKnownModified = 0;
     private List<String> cachedLastLogLines;
 
-    public CriblFileWatcherThread(String fileName, Integer maxLines) {
+    public CriblFileWatcher(String fileName, Integer maxLines) {
         this.logFile = new File(fileName);
         this.maxLines = maxLines;
         this.cachedLastLogLines = new ArrayList<>(maxLines);
 
-        logger.info("Started new logger for file: " + fileName);
+        if (!this.logFile.exists()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File does not exist on server: " + fileName);
+        }
+
+        logger.debug("Started new logger for file: " + fileName);
     }
 
     @Override
@@ -39,7 +45,7 @@ public class CriblFileWatcherThread implements Callable<List<String>> {
 
         List<String> result = readFileLinesInReverseWithStreams(this.maxLines);
 
-        logger.info("Read file {} in {} milliseconds", this.logFile.getName(), System.currentTimeMillis() - timerStart);
+        logger.debug("Read file {} in {} milliseconds", this.logFile.getName(), System.currentTimeMillis() - timerStart);
         return result;
     }
 
