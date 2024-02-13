@@ -16,7 +16,10 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 /**
- * Assumes UTF 8 file encoding for simple single byte per character encoding
+ * Main file watcher class that is callable by a thread pool and returns a future/promise when results are ready.
+ * Keeps a reference on a file and last modified date so we can track when files change to support caching and file updates
+ *
+ * Assumes UTF 8 file encoding which is simple single byte per character encoding
  */
 public class CriblFileWatcher implements Callable<List<String>> {
 
@@ -50,7 +53,7 @@ public class CriblFileWatcher implements Callable<List<String>> {
     /**
      * Reads very large files in reverse, line by line.
      * <p>
-     * This function is very performant on large files (gigabyte range) because it uses streams which are lazily evaluated until the line is read.
+     * This function is performant on large files (gigabyte range) because it uses streams which are lazily evaluated until the line is read.
      * Also, we use Java's built in NIO (new input out) library which is a newer addition into the SDK as a performance improvement over the original IO libs.
      *
      * @param maxLines Maximum number of lines to return from file

@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class LogController {
 
     // Not allowed WS input characters. Pre-compiling a reg pattern once is much faster
-    private static final Pattern NOT_ALLOWED_INPUT_CHARS = Pattern.compile("[^\\w\\d\\s\\.]");
+    private static final Pattern NOT_ALLOWED_INPUT_CHARS = Pattern.compile("[/\\\\]");
 
     @Autowired
     private Environment envProps;
@@ -57,7 +57,7 @@ public class LogController {
      */
     protected void validateStringInput(String input) throws ResponseStatusException {
         if (input != null && NOT_ALLOWED_INPUT_CHARS.matcher(input).find()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File name or filter input is invalid. Only alphanumeric characters, numbers, spaces, and periods are allowed.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File name or filter input is invalid. Forward and blackwards slashes aren't allowed in filenames for security reasons");
         }
     }
 
