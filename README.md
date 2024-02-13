@@ -15,7 +15,93 @@ the project.
 - WS via Terminal: <br/>
   - Use `curl -u cribl:password "http://localhost:8080/cribl/log/tail?filename=test.txt"`
 
-## Design
+Sample login page if testing HTTP GET through a web browser:
+
+![image](https://github.com/paulsena/Cribl-Log-Collector-Interview/assets/826073/2e359988-97e5-489a-9401-5600ef926ea0)
+
+After that, you will get the JSON response returned directly in the browser due to my serializer settings in the MVC app.
+
+For large text files, I used publically available ones at: https://github.com/logpai/loghub?tab=readme-ov-file <br/>
+I used a sample Hadoop log file 1.6GB in size, available for [download here](https://zenodo.org/records/8196385/files/HDFS_v1.zip?download=1)
+
+### API Schema
+
+**Request**
+`http://localhost:8080/cribl/log/tail?fileName=<filename>&numEntries=<number>&filter=<text to filter each line for>`
+```
+fileName: Any alphanumeric character, space, or period punctuation
+numEntries: Any value from 1 to 100. The upper limit is configurable via config properties. Limits malicious user potentially maxing out value and running out of JVM memory on very large files.
+filter: A string keyword or search term to search for. Same alphanumeric and space character restrictions 
+```
+
+**Possible HTTP Responses**
+
+HTTP 200 OK
+```
+{
+  "logEntries": [
+    "Log line 7",
+    "Log line 6",
+    "Log line 5"
+  ],
+  "filterUsed": "Log Line"
+}
+```
+
+HTTP 400 Bad Request
+```
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "File name or filter input is invalid. Only alphanumeric characters, numbers, spaces, and periods are allowed.",
+  "instance": "/cribl/log/tail"
+}
+```
+
+HTTP 404 Not Found
+```
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "File does not exist on server: data/tester.txt",
+  "instance": "/cribl/log/tail"
+}
+```
+
+HTTP 429 Too Many Requests
+```
+{
+  "type": "about:blank",
+  "title": "Too Many Requests",
+  "status": 429,
+  "detail": "Reached maximum number of file watchers: 2",
+  "instance": "/cribl/log/tail"
+}
+```
+
+<br/>
+
+## Future System Design
+
+**Primary/Secondary Log Proxy**
+
+In the questionaire form, it was posed for extra credit to develop a solution for a leader and follower cluster setup where one app server could be queried for log files and it would subsequently requests the log from multiple other secondary servers. <br/>
+I ran out of time to implement this but I'll try to get to it within the next day or two for fun and issue a Pull Request!
+
+Here would be my potential design:
+
+  - Use a shared distributed message queue (like Kafka or RabbitMQ) to communicate that a new node has joined the group. Communication would be pub/sub done on a preset topic.
+  - When a new log machine starts up, it broadcasts a register message out to the topic msg queue with it's URL server address (pub)
+  - Each machine processes this message (sub) and saves it into an in memory list of machines
+  - Expose a new endpoint in the shared app code called /primary/.. with the same follow URI for tailing a file. So example:`/primary/cribl/log/tail?filename=test.txt`
+  - When the primary endpoint is called, it simply looks into it's in memory list of registered machines, and proxies an HTTP Get request to each of them. The response structure of the API could be updated to include server name and tail list for each.
+
+This simple solution provides vault tolerance, load balancing and redundancy. Every machine has the full list of servers in the cluster and the ability to act as the primary proxy server if requested by the client. 
+A load balancer could easily be put in front of the web server to round robin primary requests to all machines in the cluster to distribute load nicely at scale.
+  
+## System Design
 
 To be discussed in later rounds of interviews but here was my thought process:
 
@@ -24,7 +110,9 @@ To be discussed in later rounds of interviews but here was my thought process:
 I used Java 8 IO Streams here which are part of the core JDK package.
 They are very performant on large files (multiple gigabyte range) because they are lazily evaluated until the line is read.
 I open the file with streams then reverse it, then read one line at a time until we hit the maximum requested log lines. <br/>
-I was able to tail a 1.6 GB file in 6.8 seconds with this implementation.
+I was able to tail a 1.6 GB file in 6.4 seconds with this implementation.
+
+![image](https://github.com/paulsena/Cribl-Log-Collector-Interview/assets/826073/93716bf1-42af-4fdf-8ac9-c72d22d44604)
 <p/>
 I hope this is ok, as I saw the notes in the assignment to not use external libraries for file reads. I proceeded with my solution bc it is a core language feature.<br/>
 If you were looking to see this implemented at an even lower level I would take the following approach:<br/>
@@ -63,15 +151,21 @@ For production scaling, auth service can be swapped out for LDAP, SAML 2.0, or O
 
 ### Validation / Input Sanitization
 
-Sanitize / Validate file name and filter input strings. File name validation is especially important as a malicious user could escape out of
-default directory and display sensitive information with `../../someimportantfile.txt` semantics.
+Sanitize / Validate file name and filter input strings. **File name validation is especially important** as a malicious user could escape out of
+default directory and display sensitive information with `../../someimportantfile.txt` or `/sys/..` semantics.
+Due to that, I limit the use of any paths in the file name. Only alphanumeric characters, spaces, and periods are allowed.
+If you would like to change the  base directory, update the config file. A later design of this could have the config file use a whitelist of multiple directories to allow.
 
 ### Configuration
 
 Used properties defined in `/resources/application.properties` to make application config changes without having to update code. <br/>
 WS credentials are currently stored in plaintext prop file. Normally, this wouldn't be checked into source control and would be in a secure file location on prod machines.
 
->logging.level.com.cribl=DEBUG <br/>
-com.cribl.logcollector.filepath=logs/ <br/>
-com.cribl.logcollector.ws.username=cribl <br/>
-com.cribl.logcollector.ws.password=password <br/>
+```
+server.error.include-message=always
+logging.level.com.cribl=DEBUG
+com.cribl.logcollector.filepath=logs/
+com.cribl.logcollector.ws.username=cribl
+com.cribl.logcollector.ws.password=password
+com.cribl.logcollector.maxTailLines=100
+```
