@@ -1,0 +1,7 @@
+Log line 1
+Log line 2
+Log line 3
+Log line 4
+Log line 5
+Log line 6
+Log line 7

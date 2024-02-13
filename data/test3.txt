@@ -1,0 +1,3 @@
+Log3 line 1
+Log3 line 2
+Log3 line 3
