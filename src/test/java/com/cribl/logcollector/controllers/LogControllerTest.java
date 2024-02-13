@@ -14,4 +14,14 @@ class LogControllerTest {
         Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateStringInput("!@#$%%^invalidfileName.txt"));
         Assertions.assertDoesNotThrow(() ->controller.validateStringInput("Valid file name.txt"));
     }
+
+    @Test
+    void testValidateNumEntriesRequested() {
+        LogController controller = new LogController();
+
+        Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateNumEntriesRequested(-100));
+        Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateNumEntriesRequested(0));
+        Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateNumEntriesRequested(Integer.MAX_VALUE));
+        Assertions.assertDoesNotThrow(() ->controller.validateNumEntriesRequested(20));
+    }
 }

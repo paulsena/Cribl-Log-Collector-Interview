@@ -19,7 +19,7 @@ import java.util.concurrent.Future;
  */
 class CriblFileWatcherTest {
 
-    private static final String TEST_FILE = "data/test.txt";
+    private static final String TEST_FILE = "logs/test.txt";
     private static final int LINES_TO_READ = 5;
 
     private static final List<String> EXPECTED_REVERSED_LOG = new ArrayList<>(LINES_TO_READ);

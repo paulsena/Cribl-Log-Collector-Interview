@@ -20,17 +20,15 @@ import java.util.stream.Stream;
  */
 public class CriblFileWatcher implements Callable<List<String>> {
 
-    private static Logger logger = LogManager.getLogger(CriblFileWatcher.class);
+    private static final Logger logger = LogManager.getLogger(CriblFileWatcher.class);
 
-    private File logFile;
-    private final int maxLines;
+    private final File logFile;
+    private int maxLines;
     protected long lastKnownModified = 0;
-    private List<String> cachedLastLogLines;
 
     public CriblFileWatcher(String fileName, Integer maxLines) {
         this.logFile = new File(fileName);
         this.maxLines = maxLines;
-        this.cachedLastLogLines = new ArrayList<>(maxLines);
 
         if (!this.logFile.exists()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File does not exist on server: " + fileName);
@@ -61,31 +59,28 @@ public class CriblFileWatcher implements Callable<List<String>> {
      */
     protected List<String> readFileLinesInReverseWithStreams(int maxLines) throws IOException {
 
-        // If file was modified since last read, lets re-read the file. Otherwise, use cached list
-        if (hasFileBeenUpdated()) {
+        List<String> tailedLogLines = new ArrayList<>(maxLines);
+        try (Stream<String> lines = Files.lines(logFile.toPath())) {
 
-            List<String> lastLogLines = new ArrayList<>(maxLines);
-            try (Stream<String> lines = Files.lines(logFile.toPath())) {
+            Stream<String> reversedLines = lines.sorted(Comparator.reverseOrder());
+            Iterator<String> iter = reversedLines.iterator();
+            int lineCnt = 0;
 
-                Stream<String> reversedLines = lines.sorted(Comparator.reverseOrder());
-                Iterator<String> iter = reversedLines.iterator();
-                int lineCnt = 0;
-
-                while (iter.hasNext() && lineCnt < this.maxLines) {
-                    String line = iter.next();
-                    lastLogLines.add(line);
-                    lineCnt++;
-                }
-                lastKnownModified = logFile.lastModified();
-                cachedLastLogLines = lastLogLines;
+            while (iter.hasNext() && lineCnt < this.maxLines) {
+                String line = iter.next();
+                tailedLogLines.add(line);
+                lineCnt++;
             }
-            return lastLogLines;
+            lastKnownModified = logFile.lastModified();
         }
-
-        return cachedLastLogLines;
+        return tailedLogLines;
     }
 
     public boolean hasFileBeenUpdated() {
         return lastKnownModified != logFile.lastModified();
+    }
+
+    public void setMaxLines(int maxLines) {
+        this.maxLines = maxLines;
     }
 }

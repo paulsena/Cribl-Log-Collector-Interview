@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A singleton service, so we can cache all results of different file watcher threads and reuse them across all different web service requests.
@@ -43,19 +44,24 @@ public class CriblFileWatcherService {
      */
     public List<String> getFilteredLogEntries(String fileName, Integer numEntries, Optional<String> filterValue) throws ExecutionException, InterruptedException {
 
-        List<String> logEntries = getLogEntries(fileName, numEntries).get();
+        // Get log entries and limit to max num entries requested
+        Stream<String> logEntriesStream = getLogEntries(fileName, numEntries).get().stream().limit(numEntries);
 
-        return filterValue.map(searchVal -> logEntries.stream().filter(entry -> entry.toLowerCase().contains(searchVal.toLowerCase())).collect(Collectors.toList())).orElse(logEntries);
+        if (filterValue.isPresent()) {
+            return logEntriesStream.filter(entry -> entry.toLowerCase().contains(filterValue.get().toLowerCase())).collect(Collectors.toList());
+        }
+
+        return logEntriesStream.collect(Collectors.toList());
     }
 
     /**
      * Main entry to retrieve tailed log files
      *
      * @param fileName File name to retrieve
-     * @param numEntries Maximum number of log entries to retrieve
+     * @param requestedNumEntries Maximum number of log entries to retrieve
      * @return Future (java's version of Promises) of a list of log entries once callable thread executes
      */
-    public Future<List<String>> getLogEntries(String fileName, Integer numEntries) {
+    public Future<List<String>> getLogEntries(String fileName, Integer requestedNumEntries) throws ExecutionException, InterruptedException {
 
         MutablePair<CriblFileWatcher, Future<List<String>>> requestedFileWatcher = fileWatchers.get(fileName);
 
@@ -63,7 +69,7 @@ public class CriblFileWatcherService {
             if (fileWatchers.size() < MAX_FILE_WATCHERS) {
 
                 // Create new file watcher
-                CriblFileWatcher newFileWatcher = new CriblFileWatcher(envProps.getProperty("com.cribl.logcollector.filepath") + fileName, numEntries);
+                CriblFileWatcher newFileWatcher = new CriblFileWatcher(envProps.getProperty("com.cribl.logcollector.filepath") + fileName, requestedNumEntries);
                 // Submit a watcher task to thread pool
                 Future<List<String>> future = executorService.submit(newFileWatcher);
                 fileWatchers.put(fileName, new MutablePair<>(newFileWatcher, future));
@@ -77,10 +83,12 @@ public class CriblFileWatcherService {
             }
         } else {
             // Check file modified date against the last known modified date
-            // Only run expensive IO read if it has been modified since
-            if (requestedFileWatcher.getKey().hasFileBeenUpdated()) {
+            // Only run expensive IO read if it has been modified since or our cached result set is smaller than num entries to query
+            if (requestedFileWatcher.getKey().hasFileBeenUpdated() || requestedFileWatcher.getValue().get().size() < requestedNumEntries) {
                 // Resubmit task to thread pool
-                Future<List<String>> future = executorService.submit(requestedFileWatcher.getKey());
+                CriblFileWatcher fileWatcher = requestedFileWatcher.getKey();
+                fileWatcher.setMaxLines(requestedNumEntries);
+                Future<List<String>> future = executorService.submit(fileWatcher);
                 // Update cache
                 requestedFileWatcher.setValue(future);
 
