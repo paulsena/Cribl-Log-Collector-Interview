@@ -1,8 +1,15 @@
 # Cribl Log Collector
 
+## Change log
+- [x] Created a lower level file watcher implementation that works with huge files with much more performance. It reads into the end of a file backwards, using a byte offset and buffer until we hit max entries to tail count. **Tests show tailing 1.6 GB file tails in 2 ms and JVM 170 MB mem usage total**.
+- [ ] Implement extra credit primary / secondary cluster design described in Sys Design section.
+
 ## Usage
 In the main directory run `./mvnw spring-boot:run` to start application server.<br/>
 `mvnw` is a Maven wrapper which is our build automation tool and dependency manager. The wrapper makes it easier so you don't need to install Maven on your system.
+
+New log files can go in /logs folder. <br/>
+Config changes can be made to `/resources/application.properties`
 
 ## Testing
 Use a browser or terminal to test the REST WS. <br/>
@@ -14,6 +21,8 @@ the project.
   - In a browser you will be prompted for a username password. Enter it and view results in browser 
 - WS via Terminal: <br/>
   - Use `curl -u cribl:password "http://localhost:8080/cribl/log/tail?filename=test.txt"`
+- Unit Tests: 
+  - Use `./mvnw test`. This will run all unit tests
 
 Sample login page if testing HTTP GET through a web browser:
 
@@ -110,7 +119,9 @@ To be discussed in later rounds of interviews but here was my thought process:
 I used Java 8 IO Streams here which are part of the core JDK package.
 They are very performant on large files (multiple gigabyte range) because they are lazily evaluated until the line is read.
 I open the file with streams then reverse it, then read one line at a time until we hit the maximum requested log lines. <br/>
-I was able to tail a 1.6 GB file in 6.4 seconds with this implementation.
+~~I was able to tail a 1.6 GB file in 6.4 seconds with this implementation.~~
+
+**Update**: Implemented a new byte seeking file watcher that reads the **1.6 GB file in 2 ms.**
 
 ![image](https://github.com/paulsena/Cribl-Log-Collector-Interview/assets/826073/93716bf1-42af-4fdf-8ac9-c72d22d44604)
 <p/>
@@ -169,3 +180,11 @@ com.cribl.logcollector.ws.username=cribl
 com.cribl.logcollector.ws.password=password
 com.cribl.logcollector.maxTailLines=100
 ```
+
+### Unit Tests
+
+I used the JUnit framework which lets me run all my tests in one suite package. Later on Mockito can be used for implementation mocking.
+
+For production, a Continuous Integration hook should be setup so that we auto run all regression tests after each commit, deploy, etc.
+
+Integration tests could be written for the exposed webservice to ensure schema contract doesn't change

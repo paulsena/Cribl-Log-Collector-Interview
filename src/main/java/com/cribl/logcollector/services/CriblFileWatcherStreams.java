@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 /**
@@ -21,15 +20,15 @@ import java.util.stream.Stream;
  *
  * Assumes UTF 8 file encoding which is simple single byte per character encoding
  */
-public class CriblFileWatcher implements Callable<List<String>> {
+public class CriblFileWatcherStreams implements ICriblFileWatcher {
 
-    private static final Logger logger = LogManager.getLogger(CriblFileWatcher.class);
+    private static final Logger logger = LogManager.getLogger(CriblFileWatcherStreams.class);
 
     private final File logFile;
     private int maxLines;
     protected long lastKnownModified = 0;
 
-    public CriblFileWatcher(String fileName, Integer maxLines) {
+    public CriblFileWatcherStreams(String fileName, Integer maxLines) {
         this.logFile = new File(fileName);
         this.maxLines = maxLines;
 
@@ -46,7 +45,7 @@ public class CriblFileWatcher implements Callable<List<String>> {
 
         List<String> result = readFileLinesInReverseWithStreams(this.maxLines);
 
-        logger.debug("Read file {} in {} milliseconds", this.logFile.getName(), System.currentTimeMillis() - timerStart);
+        logger.info("Read file {} in {} milliseconds", this.logFile.getName(), System.currentTimeMillis() - timerStart);
         return result;
     }
 
@@ -79,6 +78,7 @@ public class CriblFileWatcher implements Callable<List<String>> {
         return tailedLogLines;
     }
 
+    @Override
     public boolean hasFileBeenUpdated() {
         return lastKnownModified != logFile.lastModified();
     }

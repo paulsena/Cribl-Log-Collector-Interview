@@ -11,7 +11,9 @@ class LogControllerTest {
         LogController controller = new LogController();
 
         Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateStringInput("../../invalid/path/test.txt"));
-        Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateStringInput("!@#$%%^invalidfileName.txt"));
+        Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateStringInput("/sys/invalidfileName.txt"));
+        Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateStringInput("\\invalidfileName.txt"));
+        Assertions.assertThrows(ResponseStatusException.class, () -> controller.validateStringInput("sys/invalidfileName.txt"));
         Assertions.assertDoesNotThrow(() ->controller.validateStringInput("Valid file name.txt"));
     }
 

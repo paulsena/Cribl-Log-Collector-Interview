@@ -33,7 +33,7 @@ public class CriblFileWatcherService {
     private static final int MAX_FILE_WATCHERS = 10;
 
     // We keep an in memory "cache" of our file watchers and it's promises of results returned. This is used to skip IO operations when modified date doesn't change since last run
-    private final Map<String, MutablePair<CriblFileWatcher, Future<List<String>>>> fileWatchers = new HashMap<>(MAX_FILE_WATCHERS);
+    private final Map<String, MutablePair<ICriblFileWatcher, Future<List<String>>>> fileWatchers = new HashMap<>(MAX_FILE_WATCHERS);
     private final ExecutorService executorService = Executors.newFixedThreadPool(MAX_FILE_WATCHERS);
 
     /**
@@ -63,13 +63,13 @@ public class CriblFileWatcherService {
      */
     public Future<List<String>> getLogEntries(String fileName, Integer requestedNumEntries) throws ExecutionException, InterruptedException {
 
-        MutablePair<CriblFileWatcher, Future<List<String>>> requestedFileWatcher = fileWatchers.get(fileName);
+        MutablePair<ICriblFileWatcher, Future<List<String>>> requestedFileWatcher = fileWatchers.get(fileName);
 
         if (requestedFileWatcher == null) {
             if (fileWatchers.size() < MAX_FILE_WATCHERS) {
 
                 // Create new file watcher
-                CriblFileWatcher newFileWatcher = new CriblFileWatcher(envProps.getProperty("com.cribl.logcollector.filepath") + fileName, requestedNumEntries);
+                ICriblFileWatcher newFileWatcher = new CriblFileWatcherByteSeeker(envProps.getProperty("com.cribl.logcollector.filepath") + fileName, requestedNumEntries);
                 // Submit a watcher task to thread pool
                 Future<List<String>> future = executorService.submit(newFileWatcher);
                 fileWatchers.put(fileName, new MutablePair<>(newFileWatcher, future));
@@ -86,7 +86,7 @@ public class CriblFileWatcherService {
             // Only run expensive IO read if it has been modified since or our cached result set is smaller than num entries to query
             if (requestedFileWatcher.getKey().hasFileBeenUpdated() || requestedFileWatcher.getValue().get().size() < requestedNumEntries) {
                 // Resubmit task to thread pool
-                CriblFileWatcher fileWatcher = requestedFileWatcher.getKey();
+                ICriblFileWatcher fileWatcher = requestedFileWatcher.getKey();
                 fileWatcher.setMaxLines(requestedNumEntries);
                 Future<List<String>> future = executorService.submit(fileWatcher);
                 // Update cache

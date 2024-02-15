@@ -45,9 +45,9 @@ public class LogController {
         validateNumEntriesRequested(numEntries);
 
         // Call our singleton service which contains cached file watchers
-        List<String> logEntriesPromise = fileWatcherService.getFilteredLogEntries(fileName, numEntries, Optional.ofNullable(filter));
+        List<String> logEntries = fileWatcherService.getFilteredLogEntries(fileName, numEntries, Optional.ofNullable(filter));
 
-        return new TailApiResponse(logEntriesPromise, filter);
+        return new TailApiResponse(logEntries, filter);
     }
 
     /**
