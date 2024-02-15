@@ -1,11 +1,19 @@
 # Cribl Log Collector
 
 ## Change log
-- [x] Created a lower level file watcher implementation that works with huge files with much more performance. It reads into the end of a file backwards, using a byte offset and buffer until we hit max entries to tail count. **Tests show tailing 1.6 GB file tails in 2 ms and JVM 170 MB mem usage total**.
+- [x] Created a lower level file watcher implementation that works with huge files with much more performance. It reads into the end of a file backwards, using a byte offset and buffer until we hit max entries to tail count. <br/> 
+**Tests show 5 line tailing 1.6 GB file tails in 2 ms and JVM 170 MB mem usage total**.
+
+  ![image](https://github.com/paulsena/Cribl-Log-Collector-Interview/assets/826073/d2a34fd7-3c52-460c-ad8b-dc0c7181f665)
+  <br/>Tailing the 1.6 GB file with 100,000 entries returned took 150ms for the server to respond and 2.76 seconds (json transfer over the wire)
+
+
 - [ ] Implement extra credit primary / secondary cluster design described in Sys Design section.
 
 ## Usage
 In the main directory run `./mvnw spring-boot:run` to start application server.<br/>
+To run all unit tests, `./mvnw test`
+
 `mvnw` is a Maven wrapper which is our build automation tool and dependency manager. The wrapper makes it easier so you don't need to install Maven on your system.
 
 New log files can go in /logs folder. <br/>
@@ -89,6 +97,9 @@ HTTP 429 Too Many Requests
   "instance": "/cribl/log/tail"
 }
 ```
+
+HTTP 401 Unauthorized (When login fails)
+
 
 <br/>
 
