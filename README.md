@@ -147,7 +147,10 @@ If you were looking to see this implemented at an even lower level I would take 
 
 ### Caching
 
-I used a HashMap as a basic in memory cache structure. For production scaling, could evaluate using other in memory cache frameworks like MemCache, Redis, Hazelcast, etc.
+I used a HashMap as a basic in memory cache structure. If a file is requested that has the same or fewer num entries requested to tail, we return from cache, tail that, then return. This saves more expensive I/O operations, especially at scale
+it this was used in production with thousands of concurrent users. If the same file was cached before but request more entries than were cached, we read from disk and save to cache the new larger list.
+
+For production scaling, could evaluate using other in memory cache frameworks like MemCache, Redis, Hazelcast, etc.
 I like this solution of every machine having a local cache of it's file logs and not distributed b/c if we have a lot of log collectors in a cluster, a shared distributed cache could get quite large.
 And we don't care about availability if a machine goes down that's offered int he distrubted model, bc we need the file on that machine to watch for file changes anyways.
 
