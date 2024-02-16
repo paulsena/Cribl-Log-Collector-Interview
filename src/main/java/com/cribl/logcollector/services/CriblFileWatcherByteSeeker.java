@@ -92,6 +92,10 @@ public class CriblFileWatcherByteSeeker implements ICriblFileWatcher {
                 // We haven't hit our goal of lines to tail, keep going back in file
                 readPosition -= BUFFER_SIZE;
             }
+
+            if (!sb.isEmpty()) {
+                logLines.add(sb.reverse().toString());
+            }
         }
 
         return logLines;

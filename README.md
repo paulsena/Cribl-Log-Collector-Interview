@@ -3,10 +3,7 @@
 ## Change log
 - [x] Created a lower level file watcher implementation that works with huge files with much more performance. It reads into the end of a file backwards, using a byte offset and buffer until we hit max entries to tail count. <br/> 
 **Tests show 5 line tailing 1.6 GB file tails in 2 ms and JVM 170 MB mem usage total**.
-
-  ![image](https://github.com/paulsena/Cribl-Log-Collector-Interview/assets/826073/d2a34fd7-3c52-460c-ad8b-dc0c7181f665)
-  <br/>Tailing the 1.6 GB file with 100,000 entries returned took 150ms for the server to respond and 2.76 seconds (json transfer over the wire)
-
+  <br/>Tailing with 100,000 entries returned took 150ms for the server to respond and 2.76 seconds (json transfer over the wire)
 
 - [ ] Implement extra credit primary / secondary cluster design described in Sys Design section.
 

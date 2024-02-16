@@ -8,10 +8,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -61,18 +60,10 @@ public class CriblFileWatcherStreams implements ICriblFileWatcher {
      */
     protected List<String> readFileLinesInReverseWithStreams(int maxLines) throws IOException {
 
-        List<String> tailedLogLines = new ArrayList<>(maxLines);
+        List<String> tailedLogLines;
         try (Stream<String> lines = Files.lines(logFile.toPath())) {
 
-            Stream<String> reversedLines = lines.sorted(Comparator.reverseOrder());
-            Iterator<String> iter = reversedLines.iterator();
-            int lineCnt = 0;
-
-            while (iter.hasNext() && lineCnt < this.maxLines) {
-                String line = iter.next();
-                tailedLogLines.add(line);
-                lineCnt++;
-            }
+            tailedLogLines = reverse(lines).limit(maxLines).collect(Collectors.toList());
             lastKnownModified = logFile.lastModified();
         }
         return tailedLogLines;
@@ -85,5 +76,11 @@ public class CriblFileWatcherStreams implements ICriblFileWatcher {
 
     public void setMaxLines(int maxLines) {
         this.maxLines = maxLines;
+    }
+
+    private static <T> Stream<T> reverse(Stream<T> stream) {
+        LinkedList<T> stack = new LinkedList<>();
+        stream.forEach(stack::push);
+        return stack.stream();
     }
 }
