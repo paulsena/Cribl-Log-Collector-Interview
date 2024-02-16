@@ -24,6 +24,8 @@ public class CriblFileWatcherByteSeeker implements ICriblFileWatcher {
 
     private static final int BUFFER_SIZE = 4096; // 4KB
 
+    protected long lastKnownModified = 0;
+
     public CriblFileWatcherByteSeeker(String fileName, int maxLines) {
         this.logFile = new File(fileName);
         this.maxLines = maxLines;
@@ -42,6 +44,7 @@ public class CriblFileWatcherByteSeeker implements ICriblFileWatcher {
         List<String> result = readFileLinesInReverse();
 
         logger.info("Read file {} in {} milliseconds", this.logFile.getName(), System.currentTimeMillis() - timerStart);
+        lastKnownModified = logFile.lastModified();
         return result;
     }
 
@@ -98,12 +101,13 @@ public class CriblFileWatcherByteSeeker implements ICriblFileWatcher {
             }
         }
 
+        lastKnownModified = logFile.lastModified();
         return logLines;
     }
 
     @Override
     public boolean hasFileBeenUpdated() {
-        return false;
+        return lastKnownModified != logFile.lastModified();
     }
 
     @Override

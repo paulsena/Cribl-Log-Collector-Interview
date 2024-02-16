@@ -1,6 +1,8 @@
 package com.cribl.logcollector.services;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,9 @@ public class CriblFileWatcherService {
 
     @Autowired
     private Environment envProps;
+
+    private static final Logger logger = LogManager.getLogger(CriblFileWatcherService.class);
+
 
     private static final int MAX_FILE_WATCHERS = 10;
 
@@ -95,6 +100,7 @@ public class CriblFileWatcherService {
                 return future;
             } else {
                 // No file change. Return cached value
+                logger.debug("Cache hit, returning stored logs");
                 return requestedFileWatcher.getValue();
             }
         }
