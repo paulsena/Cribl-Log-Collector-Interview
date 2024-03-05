@@ -1,5 +1,6 @@
-package com.cribl.logcollector.services;
+package com.cribl.logcollector.services.filewatchers;
 
+import com.cribl.logcollector.services.ICriblFileWatcher;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,9 +15,9 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CriblFileWatcherByteSeeker implements ICriblFileWatcher {
+public class ByteSeekerFileWatcherCallable implements ICriblFileWatcher {
 
-    private static final Logger logger = LogManager.getLogger(CriblFileWatcherByteSeeker.class);
+    private static final Logger logger = LogManager.getLogger(ByteSeekerFileWatcherCallable.class);
 
     private final File logFile;
 
@@ -26,7 +27,7 @@ public class CriblFileWatcherByteSeeker implements ICriblFileWatcher {
 
     protected long lastKnownModified = 0;
 
-    public CriblFileWatcherByteSeeker(String fileName, int maxLines) {
+    public ByteSeekerFileWatcherCallable(String fileName, int maxLines) {
         this.logFile = new File(fileName);
         this.maxLines = maxLines;
 

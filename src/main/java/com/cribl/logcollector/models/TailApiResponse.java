@@ -10,6 +10,7 @@ public class TailApiResponse {
     private final List<String> logEntries;
     private final String filterUsed;
 
+
     public TailApiResponse(List<String> logEntries, String filterUsed) {
         this.logEntries = logEntries;
         this.filterUsed = filterUsed;

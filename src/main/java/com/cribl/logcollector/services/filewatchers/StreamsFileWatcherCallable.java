@@ -1,5 +1,6 @@
-package com.cribl.logcollector.services;
+package com.cribl.logcollector.services.filewatchers;
 
+import com.cribl.logcollector.services.ICriblFileWatcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -19,15 +20,15 @@ import java.util.stream.Stream;
  *
  * Assumes UTF 8 file encoding which is simple single byte per character encoding
  */
-public class CriblFileWatcherStreams implements ICriblFileWatcher {
+public class StreamsFileWatcherCallable implements ICriblFileWatcher {
 
-    private static final Logger logger = LogManager.getLogger(CriblFileWatcherStreams.class);
+    private static final Logger logger = LogManager.getLogger(StreamsFileWatcherCallable.class);
 
     private final File logFile;
     private int maxLines;
     protected long lastKnownModified = 0;
 
-    public CriblFileWatcherStreams(String fileName, Integer maxLines) {
+    public StreamsFileWatcherCallable(String fileName, Integer maxLines) {
         this.logFile = new File(fileName);
         this.maxLines = maxLines;
 

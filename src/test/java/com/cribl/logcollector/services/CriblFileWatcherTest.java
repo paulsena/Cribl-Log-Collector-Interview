@@ -1,5 +1,7 @@
 package com.cribl.logcollector.services;
 
+import com.cribl.logcollector.services.filewatchers.ByteSeekerFileWatcherCallable;
+import com.cribl.logcollector.services.filewatchers.StreamsFileWatcherCallable;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,7 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * JUnit tests for  {@link CriblFileWatcherStreams}
+ * JUnit tests for  {@link StreamsFileWatcherCallable}
  */
 class CriblFileWatcherTest {
 
@@ -94,8 +96,8 @@ class CriblFileWatcherTest {
         // Setup
 
         // Execution
-        ResponseStatusException ex = Assertions.assertThrows(ResponseStatusException.class, () -> new CriblFileWatcherByteSeeker("FileDoesntExist", LINES_TO_READ));
-        ResponseStatusException ex2 = Assertions.assertThrows(ResponseStatusException.class, () -> new CriblFileWatcherStreams("FileDoesntExist", LINES_TO_READ));
+        ResponseStatusException ex = Assertions.assertThrows(ResponseStatusException.class, () -> new ByteSeekerFileWatcherCallable("FileDoesntExist", LINES_TO_READ));
+        ResponseStatusException ex2 = Assertions.assertThrows(ResponseStatusException.class, () -> new StreamsFileWatcherCallable("FileDoesntExist", LINES_TO_READ));
 
         // Assert
         Assertions.assertEquals("404 NOT_FOUND", ex.getStatusCode().toString());
@@ -104,8 +106,8 @@ class CriblFileWatcherTest {
 
     private static List<ICriblFileWatcher> getFileWatcherImplementations() {
         return List.of(
-                new CriblFileWatcherByteSeeker(TEST_FILE, LINES_TO_READ),
-                new CriblFileWatcherStreams(TEST_FILE, LINES_TO_READ)
+                new ByteSeekerFileWatcherCallable(TEST_FILE, LINES_TO_READ),
+                new StreamsFileWatcherCallable(TEST_FILE, LINES_TO_READ)
         );
     }
 }

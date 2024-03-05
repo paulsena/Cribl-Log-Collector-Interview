@@ -1,5 +1,6 @@
 package com.cribl.logcollector.services;
 
+import com.cribl.logcollector.services.filewatchers.ByteSeekerFileWatcherCallable;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,7 +75,7 @@ public class CriblFileWatcherService {
             if (fileWatchers.size() < MAX_FILE_WATCHERS) {
 
                 // Create new file watcher
-                ICriblFileWatcher newFileWatcher = new CriblFileWatcherByteSeeker(envProps.getProperty("com.cribl.logcollector.filepath") + fileName, requestedNumEntries);
+                ICriblFileWatcher newFileWatcher = new ByteSeekerFileWatcherCallable(envProps.getProperty("com.cribl.logcollector.filepath") + fileName, requestedNumEntries);
                 // Submit a watcher task to thread pool
                 Future<List<String>> future = executorService.submit(newFileWatcher);
                 fileWatchers.put(fileName, new MutablePair<>(newFileWatcher, future));
